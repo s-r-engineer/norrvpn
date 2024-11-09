@@ -74,7 +74,7 @@ func decryptAES(passphrase, encryptedBase64, salt string) (string, error) {
 
 	plaintext, err := aesGCM.Open(nil, nonce, ciphertext, nil)
 	if err != nil {
-		panicer(fmt.Errorf("decryption failed: %w", err))
+		wrapIfError("decryption failed", err)
 	}
 
 	return string(plaintext), nil
@@ -87,7 +87,7 @@ func getToken(pin string) string {
 	err = json.Unmarshal(data, &token)
 	panicer(err)
 	str, err := decryptAES(pin, token.Token, token.Salt)
-	panicer(err)
+	wrapIfError("", err)
 	return str
 }
 

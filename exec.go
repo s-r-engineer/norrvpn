@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os/exec"
 	"regexp"
 	"strings"
@@ -15,23 +16,21 @@ func getEndpointIP(lines []string) string {
 			return trim(matches[1])
 		}
 	}
-	panicer("no IP found:\n" + strings.Join(lines, "\n"))
 	return ""
 }
-func run(command ...string) (string, error, int) {
+
+func run(command ...string) (string, int, error) {
 	cmd := exec.Command(command[0], command[1:]...)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		dumper(command)
-		dumper(string(output))
-		panicer(err)
+
 	}
-	return string(output), err, cmd.ProcessState.ExitCode()
+	return string(output), cmd.ProcessState.ExitCode(), err
 }
 
-func execWGdown(interfaceName, interfaceIP string) {
+func execWGdown(interfaceName, interfaceIP string) error {
 	run("ip", "route", "delete", "default", "dev", interfaceName, "table", "212450")
-	out, _, _ := run("ip", "rule", "show")
+	out, _, err := run("ip", "rule", "show")
 	run("ip", "rule", "delete", "to", getEndpointIP(strings.Split(out, "\n")), "table", "main", "priority", "219")
 	run("ip", "rule", "delete", "lookup", "212450", "priority", "220")
 	run("ip", "link", "set", "down", "dev", interfaceName)
@@ -39,7 +38,7 @@ func execWGdown(interfaceName, interfaceIP string) {
 	run("ip", "link", "delete", "dev", interfaceName)
 }
 
-func execWGup(interfaceName, privateKey, publicKey, endpointIP, interfaceIP string) {
+func execWGup(interfaceName, privateKey, publicKey, endpointIP, interfaceIP string) error {
 	var cmd *exec.Cmd
 	cmd = exec.Command("ip", "link", "show", interfaceName)
 	cmd.Run()
@@ -49,15 +48,19 @@ func execWGup(interfaceName, privateKey, publicKey, endpointIP, interfaceIP stri
 	}
 	cmd = exec.Command("wg", "set", interfaceName, "private-key", "/dev/stdin")
 	cmd.Stdin = strings.NewReader(privateKey)
-	b, err := cmd.CombinedOutput()
+	_, err := cmd.CombinedOutput()
 	if err != nil {
-		dumper(string(b))
-		panicer(err)
+		panicer(wrapIfError("", err))
 	}
 	run("wg", "set", interfaceName, "peer", publicKey, "endpoint", endpointIP+":"+defaultWGPort, "allowed-ips", "0.0.0.0/0")
-	run("ip", "address", "add", interfaceIP, "dev", interfaceName)
+	setAddress(interfaceName, interfaceIP)
 	run("ip", "link", "set", "up", "dev", interfaceName)
 	run("ip", "route", "add", "default", "dev", interfaceName, "table", "212450")
 	run("ip", "rule", "add", "to", endpointIP, "table", "main", "priority", "219")
 	run("ip", "rule", "add", "lookup", "212450", "priority", "220")
+}
+
+func setAddress(interfaceName, interfaceIP string) error {
+	_, _, err := run("ip", "address", "add", interfaceIP, "dev", interfaceName)
+	return wrapIfError(fmt.Sprintf("setAddress -> %s, %s", interfaceName, interfaceIP), err)
 }
