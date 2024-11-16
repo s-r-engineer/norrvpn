@@ -5,16 +5,18 @@ import (
 	"io"
 	"net/http"
 	"strings"
+
+	libraryErrors "github.com/s-r-engineer/library/errors"
 )
 
 func getCountryList() countries {
 	resp, err := http.Get("https://api.nordvpn.com/v1/countries")
-	panicer(err)
+	libraryErrors.Panicer(err)
 	defer resp.Body.Close()
 	data, err := io.ReadAll(resp.Body)
-	panicer(err)
+	libraryErrors.Panicer(err)
 	c := countries{}
-	panicer(json.Unmarshal(data, &c))
+	libraryErrors.Panicer(json.Unmarshal(data, &c))
 	return c
 }
 

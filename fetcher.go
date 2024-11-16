@@ -6,6 +6,8 @@ import (
 	"io"
 	"net"
 	"net/http"
+
+	libraryErrors "github.com/s-r-engineer/library/errors"
 )
 
 func FetchServerData(country int) (string, string) {
@@ -14,12 +16,12 @@ func FetchServerData(country int) (string, string) {
 		url += fmt.Sprintf("&filters[country_id]=%d", country)
 	}
 	resp, err := http.Get(url)
-	panicer(err)
+	libraryErrors.Panicer(err)
 	data, err := io.ReadAll(resp.Body)
-	panicer(err)
+	libraryErrors.Panicer(err)
 	servers := Servers{}
 	err = json.Unmarshal(data, &servers)
-	panicer(err)
+	libraryErrors.Panicer(err)
 
 	hostname := servers[0].Hostname
 	var publicKey string
@@ -33,22 +35,22 @@ func FetchServerData(country int) (string, string) {
 
 	}
 	ips, err := net.LookupIP(hostname)
-	panicer(err)
+	libraryErrors.Panicer(err)
 	return ips[0].String(), publicKey
 }
 
 func fetchOwnPrivateKey(pin string) string {
 	url := "https://api.nordvpn.com/v1/users/services/credentials"
 	req, err := http.NewRequest("GET", url, nil)
-	panicer(err)
+	libraryErrors.Panicer(err)
 	req.SetBasicAuth("token", getToken(pin))
 	resp, err := http.DefaultClient.Do(req)
-	panicer(err)
+	libraryErrors.Panicer(err)
 	data, err := io.ReadAll(resp.Body)
-	panicer(err)
+	libraryErrors.Panicer(err)
 	servers := Creds{}
 	err = json.Unmarshal(data, &servers)
-	panicer(err)
+	libraryErrors.Panicer(err)
 	return servers.NordlynxPrivateKey
 }
 

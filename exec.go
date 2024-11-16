@@ -5,6 +5,10 @@ import (
 	"os/exec"
 	"regexp"
 	"strings"
+
+	libraryErrors "github.com/s-r-engineer/library/errors"
+	libraryExec "github.com/s-r-engineer/library/exec"
+	libraryStrings "github.com/s-r-engineer/library/strings"
 )
 
 const defaultWGPort = "51820"
@@ -13,29 +17,21 @@ func getEndpointIP(lines []string) string {
 	re := regexp.MustCompile(`^219.*from all to ([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}) lookup main$`)
 	for _, line := range lines {
 		if matches := re.FindStringSubmatch(line); matches != nil {
-			return trim(matches[1])
+			return libraryStrings.Trim(matches[1])
 		}
 	}
+	libraryErrors.Panicer("no IP found:\n" + strings.Join(lines, "\n"))
 	return ""
 }
 
-func run(command ...string) (string, int, error) {
-	cmd := exec.Command(command[0], command[1:]...)
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-
-	}
-	return string(output), cmd.ProcessState.ExitCode(), err
-}
-
-func execWGdown(interfaceName, interfaceIP string) error {
-	run("ip", "route", "delete", "default", "dev", interfaceName, "table", "212450")
-	out, _, err := run("ip", "rule", "show")
-	run("ip", "rule", "delete", "to", getEndpointIP(strings.Split(out, "\n")), "table", "main", "priority", "219")
-	run("ip", "rule", "delete", "lookup", "212450", "priority", "220")
-	run("ip", "link", "set", "down", "dev", interfaceName)
-	run("ip", "address", "del", interfaceIP, "dev", interfaceName)
-	run("ip", "link", "delete", "dev", interfaceName)
+func execWGdown(interfaceName, interfaceIP string) {
+	libraryExec.Run("ip", "route", "delete", "default", "dev", interfaceName, "table", "212450")
+	out, _, _ := libraryExec.Run("ip", "rule", "show")
+	libraryExec.Run("ip", "rule", "delete", "to", getEndpointIP(strings.Split(out, "\n")), "table", "main", "priority", "219")
+	libraryExec.Run("ip", "rule", "delete", "lookup", "212450", "priority", "220")
+	libraryExec.Run("ip", "link", "set", "down", "dev", interfaceName)
+	libraryExec.Run("ip", "address", "del", interfaceIP, "dev", interfaceName)
+	libraryExec.Run("ip", "link", "delete", "dev", interfaceName)
 }
 
 func execWGup(interfaceName, privateKey, publicKey, endpointIP, interfaceIP string) error {
@@ -44,20 +40,20 @@ func execWGup(interfaceName, privateKey, publicKey, endpointIP, interfaceIP stri
 	cmd.Run()
 	if cmd.ProcessState.ExitCode() == 1 {
 		cmd = exec.Command("ip", "link", "add", "dev", interfaceName, "type", "wireguard")
-		panicer(cmd.Run())
+		libraryErrors.Panicer(cmd.Run())
 	}
 	cmd = exec.Command("wg", "set", interfaceName, "private-key", "/dev/stdin")
 	cmd.Stdin = strings.NewReader(privateKey)
 	_, err := cmd.CombinedOutput()
 	if err != nil {
-		panicer(wrapIfError("", err))
+		libraryErrors.Panicer(err)
 	}
-	run("wg", "set", interfaceName, "peer", publicKey, "endpoint", endpointIP+":"+defaultWGPort, "allowed-ips", "0.0.0.0/0")
-	setAddress(interfaceName, interfaceIP)
-	run("ip", "link", "set", "up", "dev", interfaceName)
-	run("ip", "route", "add", "default", "dev", interfaceName, "table", "212450")
-	run("ip", "rule", "add", "to", endpointIP, "table", "main", "priority", "219")
-	run("ip", "rule", "add", "lookup", "212450", "priority", "220")
+	libraryExec.Run("wg", "set", interfaceName, "peer", publicKey, "endpoint", endpointIP+":"+defaultWGPort, "allowed-ips", "0.0.0.0/0")
+	libraryExec.Run("ip", "address", "add", interfaceIP, "dev", interfaceName)
+	libraryExec.Run("ip", "link", "set", "up", "dev", interfaceName)
+	libraryExec.Run("ip", "route", "add", "default", "dev", interfaceName, "table", "212450")
+	libraryExec.Run("ip", "rule", "add", "to", endpointIP, "table", "main", "priority", "219")
+	libraryExec.Run("ip", "rule", "add", "lookup", "212450", "priority", "220")
 }
 
 func setAddress(interfaceName, interfaceIP string) error {

@@ -11,6 +11,10 @@ import (
 	"io"
 	"os"
 
+	libraryErrors "github.com/s-r-engineer/library/errors"
+	libraryIO "github.com/s-r-engineer/library/io"
+	libraryPath "github.com/s-r-engineer/library/path"
+	libraryStrings "github.com/s-r-engineer/library/strings"
 	"golang.org/x/crypto/pbkdf2"
 )
 
@@ -22,6 +26,13 @@ const (
 	letterBytes = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 )
 
+func getTokenPath() (string, string) {
+	homedir, _ := libraryPath.GetHomeDir()
+	tokenPath := homedir + "/.config/norrvpn"
+	tokenFullPath := tokenPath + "/token.json"
+	return tokenPath, tokenFullPath
+}
+
 func deriveKey(passphrase, salt string) []byte {
 	return pbkdf2.Key([]byte(passphrase), []byte(salt), iterations, keyLength, sha512.New)
 }
@@ -32,17 +43,17 @@ func encryptAES(passphrase, plaintext, salt string) (string, error) {
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		panicer(fmt.Errorf("could not create cipher: %w", err))
+		libraryErrors.Panicer(fmt.Errorf("could not create cipher: %w", err))
 	}
 
 	aesGCM, err := cipher.NewGCM(block)
 	if err != nil {
-		panicer(fmt.Errorf("could not create GCM mode: %w", err))
+		libraryErrors.Panicer(fmt.Errorf("could not create GCM mode: %w", err))
 	}
 
 	nonce := make([]byte, nonceLength)
 	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
-		panicer(fmt.Errorf("could not generate nonce: %w", err))
+		libraryErrors.Panicer(fmt.Errorf("could not generate nonce: %w", err))
 	}
 
 	ciphertext := aesGCM.Seal(nonce, nonce, plaintextBytes, nil)
@@ -54,55 +65,57 @@ func decryptAES(passphrase, encryptedBase64, salt string) (string, error) {
 
 	ciphertext, err := base64.StdEncoding.DecodeString(encryptedBase64)
 	if err != nil {
-		panicer(fmt.Errorf("could not decode base64: %w", err))
+		libraryErrors.Panicer(fmt.Errorf("could not decode base64: %w", err))
 	}
 
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		panicer(fmt.Errorf("could not create cipher: %w", err))
+		libraryErrors.Panicer(fmt.Errorf("could not create cipher: %w", err))
 	}
 
 	aesGCM, err := cipher.NewGCM(block)
 	if err != nil {
-		panicer(fmt.Errorf("could not create GCM mode: %w", err))
+		libraryErrors.Panicer(fmt.Errorf("could not create GCM mode: %w", err))
 	}
 
 	if len(ciphertext) < nonceLength {
-		panicer("ciphertext too short")
+		libraryErrors.Panicer("ciphertext too short")
 	}
 	nonce, ciphertext := ciphertext[:nonceLength], ciphertext[nonceLength:]
 
 	plaintext, err := aesGCM.Open(nil, nonce, ciphertext, nil)
 	if err != nil {
-		wrapIfError("decryption failed", err)
+		libraryErrors.Panicer(fmt.Errorf("decryption failed: %w", err))
 	}
 
 	return string(plaintext), nil
 }
 
 func getToken(pin string) string {
+	_, tokenFullPath := getTokenPath()
 	data, err := os.ReadFile(tokenFullPath)
-	panicer(err)
+	libraryErrors.Panicer(err)
 	var token Token
 	err = json.Unmarshal(data, &token)
-	panicer(err)
+	libraryErrors.Panicer(err)
 	str, err := decryptAES(pin, token.Token, token.Salt)
-	wrapIfError("", err)
+	libraryErrors.Panicer(err)
 	return str
 }
 
 func setToken(pin, token string) {
-	panicer(os.MkdirAll(tokenPath, 0700))
-	salt := randString(666)
+	tokenPath, tokenFullPath := getTokenPath()
+	libraryErrors.Panicer(libraryIO.CreataeDirs(tokenPath))
+	salt := libraryStrings.RandString(666)
 	file, err := os.OpenFile(tokenFullPath, os.O_CREATE|os.O_WRONLY, 0600)
-	panicer(err)
+	libraryErrors.Panicer(err)
 	encryptedToken, err := encryptAES(pin, token, salt)
-	panicer(err)
+	libraryErrors.Panicer(err)
 	tokenObject := Token{Salt: salt, Token: encryptedToken}
 	data, err := json.MarshalIndent(tokenObject, "", "  ")
-	panicer(err)
+	libraryErrors.Panicer(err)
 	_, err = file.Write(data)
-	panicer(err)
+	libraryErrors.Panicer(err)
 }
 
 type Token struct {
