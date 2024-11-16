@@ -54,9 +54,10 @@ func execWGup(interfaceName, privateKey, publicKey, endpointIP, interfaceIP stri
 	libraryExec.Run("ip", "route", "add", "default", "dev", interfaceName, "table", "212450")
 	libraryExec.Run("ip", "rule", "add", "to", endpointIP, "table", "main", "priority", "219")
 	libraryExec.Run("ip", "rule", "add", "lookup", "212450", "priority", "220")
+	return nil
 }
 
 func setAddress(interfaceName, interfaceIP string) error {
-	_, _, err := run("ip", "address", "add", interfaceIP, "dev", interfaceName)
-	return wrapIfError(fmt.Sprintf("setAddress -> %s, %s", interfaceName, interfaceIP), err)
+	_, _, err := libraryExec.Run("ip", "address", "add", interfaceIP, "dev", interfaceName)
+	return libraryErrors.WrapError(fmt.Sprintf("setAddress -> %s, %s", interfaceName, interfaceIP), err)
 }
