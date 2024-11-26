@@ -39,7 +39,7 @@ func CheckFileExist(filePath string) (bool, error) {
 	return false, err
 }
 
-func CreataeDirs(dirPath string) error {
+func CreateDirs(dirPath string) error {
 	return os.MkdirAll(dirPath, 0700)
 }
 

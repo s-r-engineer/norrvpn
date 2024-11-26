@@ -1,0 +1,11 @@
+[Unit]
+Description=Norrvpn service
+After=network.target
+
+[Service]
+ExecStart=/usr/local/bin/norrvpn -server
+Restart=always
+User=root
+
+[Install]
+WantedBy=default.target

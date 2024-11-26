@@ -4,24 +4,30 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 
-	libraryErrors "github.com/s-r-engineer/library/errors"
+	"github.com/olekukonko/tablewriter"
 )
 
-func getCountryList() countries {
+func getCountryList() (Countries, error) {
 	resp, err := http.Get("https://api.nordvpn.com/v1/countries")
-	libraryErrors.Panicer(err)
+	if err != nil {
+		return nil, err
+	}
 	defer resp.Body.Close()
 	data, err := io.ReadAll(resp.Body)
-	libraryErrors.Panicer(err)
-	c := countries{}
-	libraryErrors.Panicer(json.Unmarshal(data, &c))
-	return c
+	if err != nil {
+		return nil, err
+	}
+	c := Countries{}
+	err = json.Unmarshal(data, &c)
+	return c, err
 }
 
 func getCountryCode(code string) int {
-	for _, country := range getCountryList() {
+	countries, _ := getCountryList()
+	for _, country := range countries {
 		if strings.EqualFold(country.Code, code) {
 			return country.ID
 		}
@@ -29,7 +35,17 @@ func getCountryCode(code string) int {
 	return -1
 }
 
-type countries []struct {
+func formatTable(c Countries) {
+	table := tablewriter.NewWriter(os.Stdout)
+	for _, country := range c {
+		table.Append([]string{country.Name, country.Code})
+	}
+	headers := []string{"Country", "Code"}
+	table.SetHeader(headers)
+	table.Render()
+}
+
+type Countries []struct {
 	ID   int    `json:"id"`
 	Code string `json:"code"`
 	Name string `json:"name"`

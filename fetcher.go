@@ -6,22 +6,26 @@ import (
 	"io"
 	"net"
 	"net/http"
-
-	libraryErrors "github.com/s-r-engineer/library/errors"
 )
 
-func FetchServerData(country int) (string, string) {
+func FetchServerData(country int) (string, string, error) {
 	url := "https://api.nordvpn.com/v1/servers/recommendations?filters[servers_technologies][identifier]=wireguard_udp&limit=1"
 	if country > 0 {
 		url += fmt.Sprintf("&filters[country_id]=%d", country)
 	}
 	resp, err := http.Get(url)
-	libraryErrors.Panicer(err)
+	if err != nil {
+		return "", "", err
+	}
 	data, err := io.ReadAll(resp.Body)
-	libraryErrors.Panicer(err)
+	if err != nil {
+		return "", "", err
+	}
 	servers := Servers{}
 	err = json.Unmarshal(data, &servers)
-	libraryErrors.Panicer(err)
+	if err != nil {
+		return "", "", err
+	}
 
 	hostname := servers[0].Hostname
 	var publicKey string
@@ -35,23 +39,33 @@ func FetchServerData(country int) (string, string) {
 
 	}
 	ips, err := net.LookupIP(hostname)
-	libraryErrors.Panicer(err)
-	return ips[0].String(), publicKey
+	if err != nil {
+		return "", "", err
+	}
+	return ips[0].String(), publicKey, nil
 }
 
-func fetchOwnPrivateKey(pin string) string {
+func fetchOwnPrivateKey(token string) (string, error) {
 	url := "https://api.nordvpn.com/v1/users/services/credentials"
 	req, err := http.NewRequest("GET", url, nil)
-	libraryErrors.Panicer(err)
-	req.SetBasicAuth("token", getToken(pin))
+	if err != nil {
+		return "", err
+	}
+	req.SetBasicAuth("token", token)
 	resp, err := http.DefaultClient.Do(req)
-	libraryErrors.Panicer(err)
+	if err != nil {
+		return "", err
+	}
 	data, err := io.ReadAll(resp.Body)
-	libraryErrors.Panicer(err)
+	if err != nil {
+		return "", err
+	}
 	servers := Creds{}
 	err = json.Unmarshal(data, &servers)
-	libraryErrors.Panicer(err)
-	return servers.NordlynxPrivateKey
+	if err != nil {
+		return "", err
+	}
+	return servers.NordlynxPrivateKey, nil
 }
 
 type Creds struct {

@@ -1,6 +1,10 @@
 package libraryErrors
 
-import "fmt"
+import (
+	"fmt"
+
+	libraryLogging "github.com/s-r-engineer/library/logging"
+)
 
 func Panicer(err any) {
 	checker(err, func(a any) { panic(a) })
