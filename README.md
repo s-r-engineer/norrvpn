@@ -9,6 +9,8 @@ MIT licensed.
 ## NB!
 * Right now **norrvpn** only available for Linux systems.
 * No warranty whatsoever. You need to know what you are doing.
+* Since there is a Diffie-Hellman implemented for secrecy large prime is used. And that large prime is unique for every
+build. So you will not be able to use different versions for server and for client
 
 ## Dependencies
 * ip (not sure if I really need it so probably will remove it)
@@ -16,28 +18,29 @@ MIT licensed.
 
 ## Usage
 ### Obtaining token from NordVPN
-1. You do not need to get a new one if you aready have one that you are ok to use.
+1. You do not need to get a new one if you already have one that you are ok to use.
 2. Goto (https://my.nordaccount.com/dashboard/nordvpn/manual-configuration/)
 3. Generate new token with the respected button.
+
+### Installation
+Either run `make install_x64` or copy binary to `/usr/local/bin` and `conf/norrvpn.service` into any place you like where
+other services are (`/etc/systemd/system` I am using) and execute `systemctl daemon-reload` with sufficient privileges 
 
 ### init
 1. Run `norrvpn init`
 2. Enter PIN code twice
 3. Enter token [from before](#obtaining-token-from-nordvpn)
-4. Token will be encryprted and saved in $HOME/.config/norrvpn/token.json
+4. Token will be encrypted and saved in $HOME/.config/norrvpn/token.json
 
 ### UP
-1. Working only with sudo
-2. Run `sudo norrvpn up [country code]`
+Run `norrvpn up [country code]`
 
-Country code is almost the same one will be using with standard nordvpn cli tool. The issue here is that they have aliases for some countries. For example in their system United Kingdom has code **gb** but from the cli it is also available as **uk**. If not sure - grep from the [countries](#list-countries) output
+Country code is almost the same one will be using with standard nordvpn cli client.
+The issue here is that they have aliases for some countries. For example in their system United Kingdom has code
+**gb** but from the cli it is also available as **uk**. If not sure - grep from the [countries](#list-countries) output
 
 ### DOWN
-1. Working only with sudo
-2. Run `sudo norrvpn down`
+Run `norrvpn down`
 
 ### LIST COUNTRIES
-1. Run `norrvpn listCountries`
-
-### SHOW TOKEN (for test sake)
-1. Run `norrvpn showToken`
+Run `norrvpn listCountries`

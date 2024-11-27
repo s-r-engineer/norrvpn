@@ -6,10 +6,6 @@ N = norrvpn
 PRIME := $(shell go run ./randPrime/)
 LDFLAGS := -ldflags "-X main.pSource=${PRIME}"
 
-ifeq ($(DEBUG),true)
-    LDFLAGS = -ldflags "-X 'main.debug=1'"
-endif
-
 build: build_linux
 
 build_linux: build_linux_386 build_linux_x64
