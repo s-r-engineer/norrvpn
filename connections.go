@@ -2,23 +2,28 @@ package main
 
 import (
 	"fmt"
-	libraryErrors "github.com/s-r-engineer/library/errors"
 	"io"
 	"net"
 	"os"
+
+	libraryErrors "github.com/s-r-engineer/library/errors"
 )
 
 const socketPath = "/var/run/norrvpn.sock"
 
 func parseConnection(conn net.Conn) (fullData []byte, err error) {
 	var data = make([]byte, defaultReadBlockSize)
+
 	var counter int
+
 	for {
 		counter, err = conn.Read(data)
 		if err != nil && err != io.EOF {
 			return
 		}
+
 		fullData = append(fullData, data[:counter]...)
+
 		if counter < defaultReadBlockSize {
 			break
 		}

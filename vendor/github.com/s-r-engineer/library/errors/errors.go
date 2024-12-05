@@ -26,3 +26,19 @@ func WrapError(msg string, err error) error {
 	}
 	return nil
 }
+
+type LibError struct {
+	msg string
+}
+
+func (e LibError) Error() string {
+	return e.msg
+}
+
+func NewError(msg string) error {
+	return LibError{msg: msg}
+}
+
+func NewErrorf(msg string, args ...any) error {
+	return LibError{msg: fmt.Sprintf(msg, args...)}
+}

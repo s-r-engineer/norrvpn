@@ -1,41 +1,15 @@
 package main
 
 import (
-	"encoding/json"
-	"io"
-	"net/http"
 	"os"
-	"strings"
+
+	libraryIO "github.com/s-r-engineer/library/io"
 
 	"github.com/olekukonko/tablewriter"
+	libraryNordvpn "github.com/s-r-engineer/library/nordvpn"
 )
 
-func getCountryList() (Countries, error) {
-	resp, err := http.Get("https://api.nordvpn.com/v1/countries")
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, err
-	}
-	c := Countries{}
-	err = json.Unmarshal(data, &c)
-	return c, err
-}
-
-func getCountryCode(code string) int {
-	countries, _ := getCountryList()
-	for _, country := range countries {
-		if strings.EqualFold(country.Code, code) {
-			return country.ID
-		}
-	}
-	return -1
-}
-
-func formatTable(c Countries) {
+func formatTable(c libraryNordvpn.Countries) {
 	table := tablewriter.NewWriter(os.Stdout)
 	for _, country := range c {
 		table.Append([]string{country.Name, country.Code})
@@ -45,8 +19,25 @@ func formatTable(c Countries) {
 	table.Render()
 }
 
-type Countries []struct {
-	ID   int    `json:"id"`
-	Code string `json:"code"`
-	Name string `json:"name"`
+func getCountry() (string, error) {
+	_, _, countryPath := getConfigPath()
+	data, err := os.ReadFile(countryPath)
+	if err != nil {
+		return "", err
+	}
+	return string(data), err
+}
+
+func setCountry(country string) error {
+	configPath, _, countryPath := getConfigPath()
+	err := libraryIO.CreateDirs(configPath)
+	if err != nil {
+		return err
+	}
+	file, err := os.OpenFile(countryPath, os.O_CREATE|os.O_WRONLY, 0600)
+	if err != nil {
+		return err
+	}
+	_, err = file.Write([]byte(country))
+	return err
 }

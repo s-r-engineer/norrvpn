@@ -17,11 +17,15 @@ var Debug func(string, ...zap.Field)
 var Sync func() error
 
 func init() {
-        InitLogger()
+	InitLogger()
 }
 
-func InitLogger() {
-	logger = zap.Must(zap.NewDevelopment())
+func InitLogger(production ...bool) {
+	if len(production) > 0 && production[0] {
+		logger = zap.Must(zap.NewProduction())
+	} else {
+		logger = zap.Must(zap.NewDevelopment())
+	}
 	Info = logger.Info
 	Warn = logger.Warn
 	Error = logger.Error

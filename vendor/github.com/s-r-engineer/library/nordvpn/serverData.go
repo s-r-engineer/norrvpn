@@ -1,4 +1,4 @@
-package main
+package libraryNordvpn
 
 import (
 	"encoding/json"
@@ -8,64 +8,39 @@ import (
 	"net/http"
 )
 
-func FetchServerData(country int) (string, string, error) {
-	url := "https://api.nordvpn.com/v1/servers/recommendations?filters[servers_technologies][identifier]=wireguard_udp&limit=1"
+const DefaultRecommendationsURL = "https://api.nordvpn.com/v1/servers/recommendations?filters[servers_technologies][identifier]=wireguard_udp&limit=1"
+
+func FetchServerData(country int) (string, string, string, error) {
+	url := DefaultRecommendationsURL
 	if country > 0 {
 		url += fmt.Sprintf("&filters[country_id]=%d", country)
 	}
 	resp, err := http.Get(url)
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
 	servers := Servers{}
 	err = json.Unmarshal(data, &servers)
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
-
 	hostname := servers[0].Hostname
 	var publicKey string
-
 	for _, technology := range servers[0].Technologies {
-
 		if technology.Identifier != "wireguard_udp" {
 			continue
 		}
 		publicKey = technology.Metadata[0].Value
-
 	}
 	ips, err := net.LookupIP(hostname)
 	if err != nil {
-		return "", "", err
+		return "", "", "", err
 	}
-	return ips[0].String(), publicKey, nil
-}
-
-func fetchOwnPrivateKey(token string) (string, error) {
-	url := "https://api.nordvpn.com/v1/users/services/credentials"
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		return "", err
-	}
-	req.SetBasicAuth("token", token)
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return "", err
-	}
-	data, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-	servers := Creds{}
-	err = json.Unmarshal(data, &servers)
-	if err != nil {
-		return "", err
-	}
-	return servers.NordlynxPrivateKey, nil
+	return ips[0].String(), publicKey, servers[0].Locations[0].Country.Code, nil
 }
 
 type Creds struct {

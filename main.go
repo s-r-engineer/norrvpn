@@ -4,13 +4,19 @@ package main
 
 import (
 	"flag"
+
 	libraryLogging "github.com/s-r-engineer/library/logging"
 )
 
 func main() {
-	server := flag.Bool("server", false, "Set server mode")
-	flag.Parse()
 	var err error
+
+	server := flag.Bool("server", false, "Set server mode")
+	debug := flag.Bool("debug", false, "Set debug on")
+	flag.Parse()
+	if !*debug {
+		libraryLogging.InitLogger(true)
+	}
 	if *server {
 		err = serverMode()
 	} else {

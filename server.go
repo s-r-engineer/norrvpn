@@ -8,11 +8,16 @@ import (
 
 	libraryErrors "github.com/s-r-engineer/library/errors"
 	libraryLogging "github.com/s-r-engineer/library/logging"
+	libraryNordvpn "github.com/s-r-engineer/library/nordvpn"
 )
 
-const defaultNordvpnAddress = "10.5.0.2/32"
-const defaultReadBlockSize = 1024
-const interfaceName = "norrvpn01"
+const (
+	defaultNordvpnAddress = "10.5.0.2/32"
+	defaultReadBlockSize  = 1024
+	interfaceName         = "norrvpn01"
+	defaultWGPort         = "51820"
+	defaultRouteTable     = "212450"
+)
 
 type VerbType int
 
@@ -21,12 +26,18 @@ var (
 	down   VerbType = 2
 	list   VerbType = 3
 	rotate VerbType = 4
+	//status VerbType = 4
+
+	//currentCountry string
 )
 
 type response struct {
-	Result    bool      `json:"result"`
-	Error     string    `json:"error,omitempty"`
-	Countries Countries `json:"countries,omitempty"`
+	Result bool   `json:"result"`
+	Error  string `json:"error,omitempty"`
+
+	Country string `json:"country,omitempty"`
+
+	Countries libraryNordvpn.Countries `json:"countries,omitempty"`
 }
 
 func serverMode() error {
@@ -34,6 +45,7 @@ func serverMode() error {
 	if err != nil {
 		return err
 	}
+
 	defer func() {
 		libraryErrors.Errorer(listener.Close())
 	}()
@@ -54,6 +66,7 @@ func serverMode() error {
 		if err != nil {
 			return err
 		}
+
 		go serve(conn, symmetricKey)
 	}
 }
@@ -85,33 +98,36 @@ func serve(conn net.Conn, secret string) {
 		libraryLogging.Error(err.Error())
 		return
 	}
+
 	var host, key string
+
 	var result response
+
 	switch requestStruct.Verb {
-	case up:
+	case up, rotate:
+		var countryCode string
 		if requestStruct.Country != "" {
-			host, key, err = FetchServerData(getCountryCode(requestStruct.Country))
+			host, key, countryCode, err = libraryNordvpn.FetchServerData(libraryNordvpn.GetCountryCode(requestStruct.Country))
 		} else {
-			host, key, err = FetchServerData(-1)
+			host, key, countryCode, err = libraryNordvpn.FetchServerData(-1)
 		}
 		if err != nil {
 			libraryLogging.Error(err.Error())
 			return
 		}
-		privateKey, err := fetchOwnPrivateKey(requestStruct.Token)
+		privateKey, err := libraryNordvpn.FetchOwnPrivateKey(requestStruct.Token)
 		if err != nil {
 			libraryLogging.Error(err.Error())
 			return
 		}
-		err = execWGup(interfaceName, privateKey, key, host, defaultNordvpnAddress)
+		err = execWGup(interfaceName, privateKey, key, host, defaultNordvpnAddress, defaultWGPort, defaultRouteTable)
 		result = buildResponse(err)
+		result.Country = countryCode
 	case down:
-		err = execWGdown(interfaceName, defaultNordvpnAddress)
+		err = execWGdown(interfaceName, defaultNordvpnAddress, defaultRouteTable)
 		result = buildResponse(err)
-	case rotate:
-		break
 	case list:
-		countries, err := getCountryList()
+		countries, err := libraryNordvpn.GetCountryList()
 		result = buildResponse(err)
 		result.Countries = countries
 	}
