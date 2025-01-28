@@ -84,13 +84,14 @@ func execWGup(interfaceName, privateKey, publicKey, endpointIP, interfaceIP, def
 		return err
 	}
 
-	err = checkIfPeerOk(interfaceName, publicKey, endpointIP, defaultWGPort)
-	if errors.Is(err, checkErrorInstance) {
-		err = setPeer(interfaceName, publicKey, endpointIP, defaultWGPort)
-		if err != nil {
-			return err
-		}
-	} else if err != nil {
+	//err = checkIfPeerOk(interfaceName, publicKey, endpointIP, defaultWGPort)
+	//if errors.Is(err, checkErrorInstance) {
+	err = deletePeers(interfaceName)
+	if err != nil {
+		return err
+	}
+	err = setPeer(interfaceName, publicKey, endpointIP, defaultWGPort)
+	if err != nil {
 		return err
 	}
 
@@ -171,6 +172,18 @@ func getRules() (string, error) {
 		return "", libraryErrors.WrapError("ip rule list", err)
 	}
 	return out, nil
+}
+
+func getWGPeers(interfaceName string) ([]string, error) {
+	out, _, err := libraryExec.Run(
+		"wg",
+		"show",
+		interfaceName,
+		"peers")
+	if err != nil {
+		return []string{}, libraryErrors.WrapError("get WG peers", err)
+	}
+	return strings.Split(out, "\n"), nil
 }
 
 func addDefaultRoute(interfaceName, defaultRouteTable string) error {
@@ -283,6 +296,29 @@ func deleteInterface(interfaceName string) error {
 		interfaceName)
 	if err != nil {
 		return libraryErrors.WrapError("delete interface", err)
+	}
+	return nil
+}
+
+func deletePeers(interfaceName string) error {
+	currentPeers, err := getWGPeers(interfaceName)
+	if err != nil {
+		return libraryErrors.WrapError("delete peers", err)
+	}
+	for _, peer := range currentPeers {
+		if peer == "" {
+			continue
+		}
+		_, _, err = libraryExec.Run(
+			"wg",
+			"set",
+			interfaceName,
+			"peer",
+			peer,
+			"remove")
+		if err != nil {
+			return libraryErrors.WrapError("delete peers", err)
+		}
 	}
 	return nil
 }
@@ -456,21 +492,22 @@ func checkIfAddressOk(interfaceName, interfaceIP string) error {
 	}
 	return checkError{}
 }
-func checkIfPeerOk(interfaceName, publicKey, endpointIP, defaultWGPort string) error {
-	_, _, err := libraryExec.Run("wg",
-		"set",
-		interfaceName,
-		"peer",
-		publicKey,
-		"endpoint",
-		endpointIP+":"+defaultWGPort,
-		"allowed-ips",
-		"0.0.0.0/0")
-	if err != nil {
-		return libraryErrors.WrapError("get peer", err)
-	}
-	return nil
-}
+
+//	func checkIfPeerOk(interfaceName, publicKey, endpointIP, defaultWGPort string) error {
+//		_, _, err := libraryExec.Run("wg",
+//			"set",
+//			interfaceName,
+//			"peer",
+//			publicKey,
+//			"endpoint",
+//			endpointIP+":"+defaultWGPort,
+//			"allowed-ips",
+//			"0.0.0.0/0")
+//		if err != nil {
+//			return libraryErrors.WrapError("get peer", err)
+//		}
+//		return nil
+//	}
 func checkPrivateKey(interfaceName, privateKey string) error {
 	currentPrivateKey, _, err := libraryExec.Run("wg",
 		"show",
