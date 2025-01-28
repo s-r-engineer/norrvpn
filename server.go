@@ -107,9 +107,9 @@ func serve(conn net.Conn, secret string) {
 	case up, rotate:
 		var countryCode string
 		if requestStruct.Country != "" {
-			host, key, countryCode, err = libraryNordvpn.FetchServerData(libraryNordvpn.GetCountryCode(requestStruct.Country))
+			host, _, key, countryCode, err = libraryNordvpn.FetchServerData(libraryNordvpn.GetCountryCode(requestStruct.Country))
 		} else {
-			host, key, countryCode, err = libraryNordvpn.FetchServerData(-1)
+			host, _, key, countryCode, err = libraryNordvpn.FetchServerData(-1)
 		}
 		if err != nil {
 			libraryLogging.Error(err.Error())

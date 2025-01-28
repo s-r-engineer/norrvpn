@@ -10,23 +10,23 @@ import (
 
 const DefaultRecommendationsURL = "https://api.nordvpn.com/v1/servers/recommendations?filters[servers_technologies][identifier]=wireguard_udp&limit=1"
 
-func FetchServerData(country int) (string, string, string, error) {
+func FetchServerData(country int) (string, string, string, string, error) {
 	url := DefaultRecommendationsURL
 	if country > 0 {
 		url += fmt.Sprintf("&filters[country_id]=%d", country)
 	}
 	resp, err := http.Get(url)
 	if err != nil {
-		return "", "", "", err
+		return "", "", "", "", err
 	}
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", "", "", err
+		return "", "", "", "", err
 	}
 	servers := Servers{}
 	err = json.Unmarshal(data, &servers)
 	if err != nil {
-		return "", "", "", err
+		return "", "", "", "", err
 	}
 	hostname := servers[0].Hostname
 	var publicKey string
@@ -38,9 +38,9 @@ func FetchServerData(country int) (string, string, string, error) {
 	}
 	ips, err := net.LookupIP(hostname)
 	if err != nil {
-		return "", "", "", err
+		return "", "", "", "", err
 	}
-	return ips[0].String(), publicKey, servers[0].Locations[0].Country.Code, nil
+	return hostname, ips[0].String(), publicKey, servers[0].Locations[0].Country.Code, nil
 }
 
 type Creds struct {
