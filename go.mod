@@ -1,4 +1,4 @@
-module norrvpn
+module github.com/s-r-engineer/norrvpn
 
 go 1.24.0
 
