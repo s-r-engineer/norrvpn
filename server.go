@@ -99,7 +99,7 @@ func serve(conn net.Conn, secret string) {
 		return
 	}
 
-	var host, key string
+	var ip, key string
 
 	var result response
 
@@ -107,9 +107,9 @@ func serve(conn net.Conn, secret string) {
 	case up, rotate:
 		var countryCode string
 		if requestStruct.Country != "" {
-			host, key, countryCode, err = libraryNordvpn.FetchServerData(libraryNordvpn.GetCountryCode(requestStruct.Country))
+			_, ip, key, countryCode, err = libraryNordvpn.FetchServerData(libraryNordvpn.GetCountryCode(requestStruct.Country))
 		} else {
-			host, key, countryCode, err = libraryNordvpn.FetchServerData(-1)
+			_, ip, key, countryCode, err = libraryNordvpn.FetchServerData(-1)
 		}
 		if err != nil {
 			libraryLogging.Error(err.Error())
@@ -120,7 +120,7 @@ func serve(conn net.Conn, secret string) {
 			libraryLogging.Error(err.Error())
 			return
 		}
-		err = execWGup(interfaceName, privateKey, key, host, defaultNordvpnAddress, defaultWGPort, defaultRouteTable)
+		err = execWGup(interfaceName, privateKey, key, ip, defaultNordvpnAddress, defaultWGPort, defaultRouteTable)
 		result = buildResponse(err)
 		result.Country = countryCode
 	case down:

@@ -2,15 +2,15 @@ package libraryNordvpn
 
 import (
 	"encoding/json"
+	libraryHttp "github.com/s-r-engineer/library/http"
 	"io"
-	"net/http"
 	"strings"
 )
 
 const DefaultCountriesListURL = "https://api.nordvpn.com/v1/countries"
 
 func GetCountryList() (Countries, error) {
-	resp, err := http.Get(DefaultCountriesListURL)
+	resp, err := libraryHttp.GetUrl(DefaultCountriesListURL)
 	if err != nil {
 		return nil, err
 	}

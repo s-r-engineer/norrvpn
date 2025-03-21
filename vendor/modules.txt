@@ -10,10 +10,11 @@ github.com/olekukonko/tablewriter
 # github.com/rivo/uniseg v0.4.7
 ## explicit; go 1.18
 github.com/rivo/uniseg
-# github.com/s-r-engineer/library v0.0.0-20241218102829-814d17c9b179
-## explicit; go 1.23.1
+# github.com/s-r-engineer/library v0.2.1
+## explicit; go 1.24.0
 github.com/s-r-engineer/library/errors
 github.com/s-r-engineer/library/exec
+github.com/s-r-engineer/library/http
 github.com/s-r-engineer/library/io
 github.com/s-r-engineer/library/logging
 github.com/s-r-engineer/library/nordvpn
@@ -36,11 +37,11 @@ go.uber.org/zap/zapcore
 # golang.org/x/crypto v0.31.0
 ## explicit; go 1.20
 golang.org/x/crypto/pbkdf2
-# golang.org/x/sys v0.28.0
-## explicit; go 1.18
+# golang.org/x/sys v0.31.0
+## explicit; go 1.23.0
 golang.org/x/sys/plan9
 golang.org/x/sys/unix
 golang.org/x/sys/windows
-# golang.org/x/term v0.27.0
-## explicit; go 1.18
+# golang.org/x/term v0.30.0
+## explicit; go 1.23.0
 golang.org/x/term

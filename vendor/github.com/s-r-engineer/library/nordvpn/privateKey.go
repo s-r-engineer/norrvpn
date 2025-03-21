@@ -2,6 +2,7 @@ package libraryNordvpn
 
 import (
 	"encoding/json"
+	libraryHttp "github.com/s-r-engineer/library/http"
 	"io"
 	"net/http"
 )
@@ -15,7 +16,7 @@ func FetchOwnPrivateKey(token string) (string, error) {
 		return "", err
 	}
 	req.SetBasicAuth("token", token)
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := libraryHttp.Do(req)
 	if err != nil {
 		return "", err
 	}
