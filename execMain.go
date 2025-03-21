@@ -1,31 +1,57 @@
 package main
 
-import "errors"
+import (
+	"errors"
+	libraryLogging "github.com/s-r-engineer/library/logging"
+)
 
 func execWGdown(interfaceName, interfaceIP, defaultRouteTable string) (err error) {
+	libraryLogging.Debug("Checking default route")
 	if err = checkDefaultRoute(interfaceName, defaultRouteTable); err == nil || errors.Is(err, checkErrorInstance) {
+		libraryLogging.Debug("Deleting default route")
 		err = deleteDefaultRoute(interfaceName, defaultRouteTable)
 		if err != nil {
+			libraryLogging.Debug("Error deleting default route")
 			return err
 		}
 	}
+	libraryLogging.Debug("Default route clean")
+	libraryLogging.Debug("Deleting server rule")
 	err = deleteServerRule()
 	if err != nil {
+		libraryLogging.Debug("Error deleting server rule")
 		return err
 	}
+	libraryLogging.Debug("Server rule clean")
+	libraryLogging.Debug("Deleting lookup rule")
 	err = deleteLookupRule(defaultRouteTable)
 	if err != nil {
+		libraryLogging.Debug("Error deleting lookup rule")
 		return err
 	}
+	libraryLogging.Debug("Lookup rule clean")
+	libraryLogging.Debug("Setting link down")
 	err = linkDown(interfaceName)
 	if err != nil {
+		libraryLogging.Debug("Error setting link down")
 		return err
 	}
+	libraryLogging.Debug("Link clean")
+	libraryLogging.Debug("Deleting IP address")
 	err = deleteIpAddress(interfaceIP, interfaceName)
 	if err != nil {
+		libraryLogging.Debug("Error deleting IP address")
 		return err
 	}
-	return deleteInterface(interfaceName)
+	libraryLogging.Debug("IP address clean")
+	libraryLogging.Debug("Deleting interface")
+	err = deleteInterface(interfaceName)
+	if err != nil {
+		libraryLogging.Debug("Error deleting interface")
+		return err
+	}
+	libraryLogging.Debug("Interface clean")
+	return nil
 }
 
 func execWGup(interfaceName, privateKey, publicKey, endpointIP, interfaceIP, defaultWGPort, defaultRouteTable string) (err error) {
