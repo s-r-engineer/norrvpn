@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -323,20 +324,23 @@ func checkIfAddressOk(interfaceName, interfaceIP string) error {
 	}
 	return checkError{}
 }
+
 func checkIfPeerOk(interfaceName, publicKey, endpointIP, defaultWGPort string) error {
-	_, _, err := libraryExec.Run("wg",
-		"set",
-		interfaceName,
-		"peer",
-		publicKey,
-		"endpoint",
-		endpointIP+":"+defaultWGPort,
-		"allowed-ips",
-		"0.0.0.0/0")
+	peers, err := getPeers(interfaceName)
 	if err != nil {
-		return libraryErrors.WrapError("get peer", err)
+		return libraryErrors.WrapError("checkIfPeerOk", err)
 	}
-	return nil
+	if len(peers) > 1 {
+		return checkErrorInstance
+	}
+	endpointAddress := fmt.Sprintf("%s:%s", endpointIP, defaultWGPort)
+	for _, peer := range peers {
+		if peer[0] == publicKey && peer[1] == endpointAddress {
+			return nil
+		}
+	}
+	return checkErrorInstance
+
 }
 func checkPrivateKey(interfaceName, privateKey string) error {
 	currentPrivateKey, _, err := libraryExec.Run("wg",
@@ -350,4 +354,49 @@ func checkPrivateKey(interfaceName, privateKey string) error {
 		return nil
 	}
 	return checkError{}
+}
+
+func getPeers(interfaceName string) (s [][]string, err error) {
+	out, _, err := libraryExec.Run("wg",
+		"show",
+		interfaceName,
+		"endpoints")
+	if err != nil {
+		return s, err
+	}
+	re := regexp.MustCompile(`\s+`)
+	for _, l := range strings.Split(out, "\n") {
+		if l == "" {
+			continue
+		}
+		s = append(s, re.Split(l, -1))
+	}
+	return
+}
+
+func deletePeer(interfaceName, key string) error {
+	wrapper := libraryErrors.PartWrapError("delete peers error")
+	out, code, err := libraryExec.Run("wg", "set", interfaceName, "peer", key, "remove")
+	if err != nil {
+		return wrapper(err)
+	}
+	if code != 0 {
+		return wrapper(errors.New(out))
+	}
+	return nil
+}
+
+func deletePeers(interfaceName string) error {
+	wrapper := libraryErrors.PartWrapError("delete peers error")
+	peers, err := getPeers(interfaceName)
+	if err != nil {
+		return wrapper(err)
+	}
+	for _, peer := range peers {
+		err = deletePeer(interfaceName, peer[0])
+		if err != nil {
+			return wrapper(err)
+		}
+	}
+	return nil
 }
