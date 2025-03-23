@@ -10,11 +10,9 @@ func main() {
 	var err error
 
 	server := flag.Bool("server", false, "Set server mode")
-	debug := flag.Bool("debug", false, "Set debug on")
+	prod := flag.Bool("prod", false, "Set debug on")
 	flag.Parse()
-	if !*debug {
-		libraryLogging.InitLogger(true)
-	}
+	libraryLogging.InitLogger(*prod)
 	if *server {
 		err = serverMode()
 	} else {
