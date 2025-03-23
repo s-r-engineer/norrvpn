@@ -10,8 +10,8 @@ github.com/pmezard/go-difflib v1.0.0/go.mod h1:iKH77koFhYxTK1pcRnkKkqfTogsbg7gZN
 github.com/rivo/uniseg v0.2.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJtxc=
 github.com/rivo/uniseg v0.4.7 h1:WUdvkW8uEhrYfLC4ZzdpI2ztxP1I582+49Oc5Mq64VQ=
 github.com/rivo/uniseg v0.4.7/go.mod h1:FN3SvrM+Zdj16jyLfmOkMNblXMcoc8DfTHruCPUcx88=
-github.com/s-r-engineer/library v0.2.2 h1:5EQfE7hreWDTU4b74O9HEf5aBP5XABKJ53r6xmkUHxY=
-github.com/s-r-engineer/library v0.2.2/go.mod h1:FLjJ0Sdjijikj5qUKapT2hQLXiF/2Fr1dz0e/6s8l90=
+github.com/s-r-engineer/library v0.2.3 h1:cKS4uH981XbV+HhhDnE2csp+X1MuvTduYwrPerijqzw=
+github.com/s-r-engineer/library v0.2.3/go.mod h1:FLjJ0Sdjijikj5qUKapT2hQLXiF/2Fr1dz0e/6s8l90=
 github.com/stretchr/testify v1.8.1 h1:w7B6lhMri9wdJUVmEZPGGhZzrYTPvgJArz7wNPgYKsk=
 github.com/stretchr/testify v1.8.1/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o6fzry7u4=
 go.uber.org/goleak v1.3.0 h1:2K3zAYmnTNqV73imy9J1T3WC+gmCePx2hEGkimedGto=

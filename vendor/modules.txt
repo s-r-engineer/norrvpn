@@ -10,7 +10,7 @@ github.com/olekukonko/tablewriter
 # github.com/rivo/uniseg v0.4.7
 ## explicit; go 1.18
 github.com/rivo/uniseg
-# github.com/s-r-engineer/library v0.2.2
+# github.com/s-r-engineer/library v0.2.3
 ## explicit; go 1.24.0
 github.com/s-r-engineer/library/errors
 github.com/s-r-engineer/library/exec

@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	github.com/olekukonko/tablewriter v0.0.5
-	github.com/s-r-engineer/library v0.2.2
+	github.com/s-r-engineer/library v0.2.3
 	golang.org/x/crypto v0.31.0
 )
 
