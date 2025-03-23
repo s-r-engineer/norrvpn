@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"strings"
@@ -122,7 +123,7 @@ func clientMode() error {
 		return err
 	}
 	if !responseData.Result {
-		return libraryErrors.WrapError("failed with message", fmt.Errorf(responseData.Error))
+		return libraryErrors.WrapError("failed with message", errors.New(responseData.Error))
 	}
 	err = setCountry(responseData.Country)
 	if err != nil {
