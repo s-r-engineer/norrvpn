@@ -20,6 +20,12 @@ func checker(a any, f func(any)) {
 	}
 }
 
+func PartWrapError(msg string) func(err error) error {
+	return func(err error) error {
+		return WrapError(msg, err)
+	}
+}
+
 func WrapError(msg string, err error) error {
 	if err != nil {
 		return fmt.Errorf("%s -> %w", msg, err)
