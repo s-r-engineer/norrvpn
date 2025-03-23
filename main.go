@@ -1,5 +1,3 @@
-// Command wgctrl is a testing utility for interacting with WireGuard via package
-// wgctrl.
 package main
 
 import (
