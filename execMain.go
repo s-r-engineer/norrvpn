@@ -65,6 +65,13 @@ func execWGup(interfaceName, privateKey, publicKey, endpointIP, interfaceIP, def
 		}
 	}
 	libraryLogging.Debug("Interface OK")
+	//libraryLogging.Debug("Setting DNS")
+	//err = setDNS(interfaceName, defaultNordVPNDNS)
+	//if err != nil {
+	//	libraryLogging.Debug("Error setting DNS")
+	//	return err
+	//}
+	//libraryLogging.Debug("Setting DNS ok")
 	libraryLogging.Debug("Checking private key")
 	err = checkPrivateKey(interfaceName, privateKey)
 	if errors.Is(err, checkErrorInstance) {
