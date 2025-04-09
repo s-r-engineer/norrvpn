@@ -45,9 +45,6 @@ func getSocketListener() (net.Listener, error) {
 	err = os.Chmod(socketPath, 0777)
 	if err != nil {
 		libraryErrors.Errorer(listener.Close())
-		return nil, err
-	}
-	if err != nil {
 		return nil, fmt.Errorf("failed to create Unix socket: %v", err)
 	}
 	return listener, err

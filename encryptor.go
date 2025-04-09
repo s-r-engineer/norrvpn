@@ -1,24 +1,15 @@
 package main
 
 import (
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/rand"
-	"crypto/sha256"
-	"crypto/sha512"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
-	"io"
 	"math/big"
-	"net"
 	"os"
 
-	libraryErrors "github.com/s-r-engineer/library/errors"
+	libraryEncryption "github.com/s-r-engineer/library/encryption"
 	libraryIO "github.com/s-r-engineer/library/io"
 	libraryPath "github.com/s-r-engineer/library/path"
 	libraryStrings "github.com/s-r-engineer/library/strings"
-	"golang.org/x/crypto/pbkdf2"
 )
 
 const (
@@ -42,46 +33,6 @@ func getConfigPath() (string, string, string) {
 	tokenFullPath := tokenPath + "/token.json"
 	countryFullPAth := tokenPath + "/country"
 	return tokenPath, tokenFullPath, countryFullPAth
-}
-
-func deriveKey(passphrase, salt string) []byte {
-	return pbkdf2.Key([]byte(passphrase), []byte(salt), iterations, keyLength, sha512.New)
-}
-
-func encryptAES(passphrase string, plaintextBytes []byte, salt string) ([]byte, error) {
-	key := deriveKey(passphrase, salt)
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, err
-	}
-	aesGCM, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, err
-	}
-	nonce := make([]byte, nonceLength)
-	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
-		return nil, err
-	}
-	ciphertext := aesGCM.Seal(nonce, nonce, plaintextBytes, nil)
-	return ciphertext, nil
-}
-
-func decryptAES(passphrase string, encryptedBytes []byte, salt string) ([]byte, error) {
-	key := deriveKey(passphrase, salt)
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, err
-	}
-	aesGCM, err := cipher.NewGCM(block)
-	if err != nil {
-		return nil, err
-	}
-	if len(encryptedBytes) < nonceLength {
-		return nil, libraryErrors.WrapError("ciphertext too short", nil)
-	}
-	nonce, ciphertext := encryptedBytes[:nonceLength], encryptedBytes[nonceLength:]
-
-	return aesGCM.Open(nil, nonce, ciphertext, nil)
 }
 
 func parseToken() (string, error) {
@@ -109,7 +60,7 @@ func getToken(pin string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	b, err := decryptAES(pin, tokenEncryptedBytes, token.Salt)
+	b, err := libraryEncryption.DecryptAES(pin, token.Salt, tokenEncryptedBytes)
 	return string(b), err
 }
 
@@ -124,7 +75,7 @@ func setToken(pin, token string) error {
 	if err != nil {
 		return err
 	}
-	encryptedToken, err := encryptAES(pin, []byte(token), salt)
+	encryptedToken, err := libraryEncryption.EncryptAES(pin, salt, []byte(token))
 	if err != nil {
 		return err
 	}
@@ -135,27 +86,6 @@ func setToken(pin, token string) error {
 	}
 	_, err = file.Write(data)
 	return err
-}
-
-func getDHSecret(conn net.Conn) (string, error) {
-	priv, err := rand.Int(rand.Reader, p)
-	if err != nil {
-		return "", err
-	}
-	pub := new(big.Int).Exp(g, priv, p)
-	otherSidePub := make([]byte, p.BitLen()/8+1)
-	_, err = conn.Write(pub.Bytes())
-	if err != nil {
-		return "", err
-	}
-	n, err := conn.Read(otherSidePub)
-	if err != nil {
-		return "", err
-	}
-	otherSide := new(big.Int).SetBytes(otherSidePub[:n])
-	sharedSecret := new(big.Int).Exp(otherSide, priv, p)
-	symmetricKey := sha256.Sum256(sharedSecret.Bytes())
-	return fmt.Sprintf("%x", symmetricKey), nil
 }
 
 type Token struct {

@@ -38,6 +38,7 @@ func setDNS(interfaceName, dnsServers string) error {
 }
 
 func setNMDNS(interfaceName, dnsServers string) (err error) {
+	return err
 	_, _, err = libraryExec.Run("nmcli", "connection", "modify", interfaceName, "ipv4.dns", dnsServers)
 	if err != nil {
 		return err
@@ -45,8 +46,9 @@ func setNMDNS(interfaceName, dnsServers string) (err error) {
 	_, _, err = libraryExec.Run("nmcli", "connection", "modify", interfaceName, "ipv4.ignore-auto-dns", "yes")
 	return err
 }
-func setResolvedDNS(interfaceName, dnsServers string) error {
-	_, _, err := libraryExec.Run("resolvectl", "dns", interfaceName, dnsServers)
+func setResolvedDNS(interfaceName, dnsServers string) (err error) {
+	return err
+	_, _, err = libraryExec.Run("resolvectl", "dns", interfaceName, dnsServers)
 	if err != nil {
 		return err
 	}

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 
+	libraryEncryption "github.com/s-r-engineer/library/encryption"
 	libraryErrors "github.com/s-r-engineer/library/errors"
 	libraryIO "github.com/s-r-engineer/library/io"
 	libraryLogging "github.com/s-r-engineer/library/logging"
@@ -87,7 +88,7 @@ func clientMode() error {
 		libraryErrors.Errorer(conn.Close())
 	}()
 
-	symmetricKey, err := getDHSecret(conn)
+	symmetricKey, err := libraryEncryption.GetDHSecretFromConnection(conn, p, g)
 	if err != nil {
 		return err
 	}
@@ -97,7 +98,7 @@ func clientMode() error {
 		return err
 	}
 
-	encryptedData, err := encryptAES(symmetricKey, bytes, dhSalt)
+	encryptedData, err := libraryEncryption.EncryptAES(symmetricKey, dhSalt, bytes)
 	if err != nil {
 		return err
 	}
@@ -112,7 +113,7 @@ func clientMode() error {
 		return err
 	}
 
-	fullData, err := decryptAES(symmetricKey, fullDataEncrypted, dhSalt)
+	fullData, err := libraryEncryption.DecryptAES(symmetricKey, dhSalt, fullDataEncrypted)
 	if err != nil {
 		return err
 	}

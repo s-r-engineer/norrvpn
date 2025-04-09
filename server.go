@@ -6,6 +6,7 @@ import (
 	"net"
 	"os"
 
+	libraryEncryption "github.com/s-r-engineer/library/encryption"
 	libraryErrors "github.com/s-r-engineer/library/errors"
 	libraryLogging "github.com/s-r-engineer/library/logging"
 	libraryNordvpn "github.com/s-r-engineer/library/nordvpn"
@@ -62,7 +63,7 @@ func serverMode() error {
 			return err
 		}
 
-		symmetricKey, err := getDHSecret(conn)
+		symmetricKey, err := libraryEncryption.GetDHSecretFromConnection(conn, p, g)
 		if err != nil {
 			return err
 		}
@@ -87,7 +88,7 @@ func serve(conn net.Conn, secret string) {
 		libraryLogging.Error(err.Error())
 		return
 	}
-	decryptedData, err := decryptAES(secret, fullData, dhSalt)
+	decryptedData, err := libraryEncryption.DecryptAES(secret, dhSalt, fullData)
 	if err != nil {
 		libraryLogging.Error(err.Error())
 		return
@@ -138,7 +139,7 @@ func serve(conn net.Conn, secret string) {
 	}
 	data, err := json.Marshal(result)
 	libraryErrors.Errorer(err)
-	encryptedData, err := encryptAES(secret, data, dhSalt)
+	encryptedData, err := libraryEncryption.EncryptAES(secret, dhSalt, data)
 	libraryErrors.Errorer(err)
 	_, err = conn.Write(encryptedData)
 	libraryErrors.Errorer(err)

@@ -14,8 +14,10 @@ const (
 	letterIdxMax  = 63 / letterIdxBits
 )
 
+var src = rand.New(rand.NewSource(time.Now().UnixNano()))
+
 func RandString(n int) string {
-	src := rand.NewSource(time.Now().UnixNano())
+
 	sb := strings.Builder{}
 	sb.Grow(n)
 	for i, cache, remain := n-1, src.Int63(), letterIdxMax; i >= 0; {
